@@ -10,7 +10,7 @@ import { PluginInfo } from '../../../../plugin/pluginsSlice';
  * - it will also do a compatibility check for the plugins and return the plugins with their compatibility status,
  * - the compatibility check is needed to render the plugin switches
  */
-async function getPlugins(pluginSettings: { name: string; isEnabled: boolean }[]) {
+async function getPlugins(pluginSettings: { name: string; isEnabled?: boolean }[]) {
   const pluginPaths = (await fetch(`${helpers.getAppUrl()}plugins`).then(resp =>
     resp.json()
   )) as string[];
@@ -65,7 +65,7 @@ async function getPlugins(pluginSettings: { name: string; isEnabled: boolean }[]
   return pluginsWithIsEnabled;
 }
 
-export function usePlugins(pluginSettings: { name: string; isEnabled: boolean }[]) {
+export function usePlugins(pluginSettings: { name: string; isEnabled?: boolean }[]) {
   // takes two params, the key and the function that will be called to get the data
   return useQuery({ queryKey: ['plugins'], queryFn: () => getPlugins(pluginSettings) });
 }
