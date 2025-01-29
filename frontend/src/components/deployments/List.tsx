@@ -32,8 +32,10 @@ export default function DeploymentsList() {
       return null;
     }
 
-    return conditions
-      .sort((c1: any, c2: any) => {
+    function sortConditions(condArr: any) {
+      // Need to make a copy of the array since the original array is immutable
+      const copyCondArr = [...condArr];
+      return copyCondArr.sort((c1: any, c2: any) => {
         if (c1.type < c2.type) {
           return -1;
         } else if (c1.type > c2.type) {
@@ -41,19 +43,23 @@ export default function DeploymentsList() {
         } else {
           return 0;
         }
-      })
-      .map((condition: any) => {
-        const { type, message } = condition;
-        return (
-          <Box display="inline-block">
-            <StatusLabel status="">
-              <span title={message} key={type}>
-                {type}
-              </span>
-            </StatusLabel>
-          </Box>
-        );
       });
+    }
+
+    const sortedConditions = sortConditions(conditions);
+
+    return sortedConditions.map((condition: any) => {
+      const { type, message } = condition;
+      return (
+        <Box display="inline-block">
+          <StatusLabel status="">
+            <span title={message} key={type}>
+              {type}
+            </span>
+          </StatusLabel>
+        </Box>
+      );
+    });
   }
 
   return (
