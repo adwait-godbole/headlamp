@@ -44,7 +44,7 @@ jobs:
           cluster_name: test
       - name: Merge kubeconfigs
         run: |
-          export KUBECONFIG=$(kind get kubeconfig-path --name=test):$(kind get kubeconfig-path --name=test2)
+          export KUBECONFIG=$(kind get kubeconfig --name test):$(kind get kubeconfig --name test2)
           kubectl config view --merge --flatten > merged-kubeconfig
           mkdir -p /home/runner/.kube
           cp merged-kubeconfig /home/runner/.kube/config
