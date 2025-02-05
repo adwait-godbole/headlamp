@@ -1,22 +1,21 @@
 /// <reference types="node" />
-import { expect, Page } from '@playwright/test';
+import { expect, Page } from "@playwright/test";
 
 export class HeadlampPage {
   constructor(private page: Page) {}
 
-  async authenticate() {
+  async authenticate(url = process.env.HEADLAMP_TEST_URL) {
     // Go to the authentication page
-    const url = process.env.HEADLAMP_TEST_URL;
-    await this.page.goto(url || '/');
+    await this.page.goto(url || "/");
     await this.page.waitForSelector('h1:has-text("Authentication")');
 
     // Check to see if already authenticated
     if (await this.page.isVisible('button:has-text("Authenticate")')) {
-      const token = process.env.HEADLAMP_TOKEN || '';
+      const token = process.env.HEADLAMP_TOKEN || "";
       this.hasToken(token);
 
       // Fill in the token
-      await this.page.locator('#token').fill(token);
+      await this.page.locator("#token").fill(token);
 
       // Click on the "Authenticate" button and wait for navigation
       await Promise.all([
@@ -35,17 +34,17 @@ export class HeadlampPage {
   }
 
   async hasToken(token: string) {
-    expect(token).not.toBe('');
+    expect(token).not.toBe("");
   }
 
   async hasNetworkTab() {
     const networkTab = this.page.locator('span:has-text("Network")').first();
-    expect(await networkTab.textContent()).toBe('Network');
+    expect(await networkTab.textContent()).toBe("Network");
   }
 
   async hasSecurityTab() {
     const networkTab = this.page.locator('span:has-text("Security")').first();
-    expect(await networkTab.textContent()).toBe('Security');
+    expect(await networkTab.textContent()).toBe("Security");
   }
 
   async checkPageContent(text: string) {
@@ -61,7 +60,7 @@ export class HeadlampPage {
 
   async navigateTopage(page: string, title: RegExp) {
     await this.page.goto(page);
-    await this.page.waitForLoadState('load');
+    await this.page.waitForLoadState("load");
     await this.hasTitleContaining(title);
   }
 
@@ -72,7 +71,7 @@ export class HeadlampPage {
     // Wait for the logout option to be visible and click on it
     await this.page.waitForSelector('a.MuiMenuItem-root:has-text("Log out")');
     await this.page.click('a.MuiMenuItem-root:has-text("Log out")');
-    await this.page.waitForLoadState('load');
+    await this.page.waitForLoadState("load");
 
     // Expects the URL to contain c/main/token
     await this.hasURLContaining(/.*token/);
@@ -80,11 +79,11 @@ export class HeadlampPage {
 
   async tableHasHeaders(tableSelector: string, expectedHeaders: string[]) {
     // Get all table headers
-    const headers = await this.page.$$eval(`${tableSelector} th`, ths =>
-      ths.map(th => {
+    const headers = await this.page.$$eval(`${tableSelector} th`, (ths) =>
+      ths.map((th) => {
         if (th && th.textContent) {
           // Table header also contains a number, displayed during multi-sorting, so we remove it
-          return th.textContent.trim().replace('0', '');
+          return th.textContent.trim().replace("0", "");
         }
       })
     );
@@ -99,7 +98,7 @@ export class HeadlampPage {
 
   async clickOnPlugin(pluginName: string) {
     await this.page.click(`a:has-text("${pluginName}")`);
-    await this.page.waitForLoadState('load');
+    await this.page.waitForLoadState("load");
   }
 
   async checkRows() {
@@ -107,8 +106,8 @@ export class HeadlampPage {
     const rowsDisplayed1 = await this.getRowsDisplayed();
 
     // Click on the next page button
-    const nextPageButton = this.page.getByRole('button', {
-      name: 'Go to next page',
+    const nextPageButton = this.page.getByRole("button", {
+      name: "Go to next page",
     });
     await nextPageButton.click();
 
