@@ -42,13 +42,6 @@ jobs:
         uses: helm/kind-action@0025e74a8c7512023d06dc019c617aa3cf561fde # v1.0.0
         with:
           cluster_name: test
-      - name: Merge kubeconfigs
-        run: |
-          export KUBECONFIG=$(kind get kubeconfig --name test):$(kind get kubeconfig --name test2)
-          kubectl config view --merge --flatten > merged-kubeconfig
-          mkdir -p /home/runner/.kube
-          cp merged-kubeconfig /home/runner/.kube/config
-          cat /home/runner/.kube/config
         # now you can run kubectl to see the pods in the cluster
       - name: Try the cluster!
         run: kubectl get pods -A
@@ -124,8 +117,27 @@ jobs:
             echo "Examples content: $examples_content"
             exit 1
           fi
-      - name: Deploy to cluster
-        run: kubectl apply -f e2e-tests/kubernetes-headlamp-ci.yaml
+      - name: Configure multi-cluster access
+        run: |
+          # Get cluster information for test cluster
+          export TEST_CA_DATA=$(kubectl config view --raw --minify --context=kind-test -o jsonpath='{.clusters[0].cluster.certificate-authority-data}')
+          export TEST_SERVER=$(kubectl config view --raw --minify --context=kind-test -o jsonpath='{.clusters[0].cluster.server}')
+
+          # Get cluster information for test2 cluster
+          export TEST2_CA_DATA=$(kubectl config view --raw --minify --context=kind-test2 -o jsonpath='{.clusters[0].cluster.certificate-authority-data}')
+          export TEST2_SERVER=$(kubectl config view --raw --minify --context=kind-test2 -o jsonpath='{.clusters[0].cluster.server}')
+
+          # Create service accounts and get tokens
+          kubectl --context=kind-test create serviceaccount headlamp-admin --namespace kube-system
+          kubectl --context=kind-test create clusterrolebinding headlamp-admin --serviceaccount=kube-system:headlamp-admin --clusterrole=cluster-admin
+          export TEST_TOKEN=$(kubectl --context=kind-test create token headlamp-admin --duration 24h -n kube-system)
+
+          kubectl --context=kind-test2 create serviceaccount headlamp-admin --namespace kube-system
+          kubectl --context=kind-test2 create clusterrolebinding headlamp-admin --serviceaccount=kube-system:headlamp-admin --clusterrole=cluster-admin
+          export TEST2_TOKEN=$(kubectl --context=kind-test2 create token headlamp-admin --duration 24h -n kube-system)
+
+          # Create the multi-cluster config
+          envsubst < kubernetes-headlamp-ci.yaml | kubectl apply -f -
       - name: Run e2e tests
         run: |
           echo "------------------------------------sleeping 12...------------------------------------"

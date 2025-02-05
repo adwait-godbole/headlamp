@@ -1,4 +1,69 @@
+# Source: headlamp/templates/pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: headlamp
+  namespace: kube-system
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
 ---
+# Source: headlamp/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: headlamp
+  namespace: kube-system
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 4466
+  selector:
+    app.kubernetes.io/name: headlamp
+    app.kubernetes.io/instance: headlamp
+---
+# ConfigMap to store the kubeconfig
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: headlamp-kubeconfig
+  namespace: kube-system
+data:
+  config: |
+    apiVersion: v1
+    kind: Config
+    current-context: kind-test
+    contexts:
+    - name: kind-test
+      context:
+        cluster: kind-test
+        user: headlamp-admin
+    - name: kind-test2
+      context:
+        cluster: kind-test2
+        user: headlamp-admin
+    clusters:
+    - name: kind-test
+      cluster:
+        server: ${TEST_SERVER}
+        certificate-authority-data: ${TEST_CA_DATA}
+    - name: kind-test2
+      cluster:
+        server: ${TEST2_SERVER}
+        certificate-authority-data: ${TEST2_CA_DATA}
+    users:
+    - name: headlamp-admin
+      user:
+        token: ${TEST_TOKEN}
+    - name: headlamp-admin
+      user:
+        token: ${TEST2_TOKEN}
+---
+# Source: headlamp/templates/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -19,6 +84,17 @@ spec:
         app.kubernetes.io/name: headlamp
         app.kubernetes.io/instance: headlamp
     spec:
+      initContainers:
+        - command:
+            - /bin/sh
+            - -c
+            - mkdir -p /build/plugins && cp -r /plugins/* /build/plugins/
+          image: ghcr.io/headlamp-k8s/headlamp-plugins-test:latest
+          imagePullPolicy: Never
+          name: headlamp-plugins
+          volumeMounts:
+            - mountPath: /build/plugins
+              name: headlamp-plugins
       containers:
         - name: headlamp
           securityContext:
@@ -31,21 +107,37 @@ spec:
           args:
             - "-in-cluster"
             - "-enable-dynamic-clusters"
-            - "-kubeconfig=/home/headlamp/.config/Headlamp/kubeconfigs/config"
+            - "-plugins-dir=/build/plugins"
+          env:
+            - name: KUBECONFIG
+              value: "/home/headlamp/.config/Headlamp/kubeconfigs/config"
           ports:
             - name: http
               containerPort: 4466
               protocol: TCP
-          env:
-            - name: KUBECONFIG
-              value: "/home/headlamp/.config/Headlamp/kubeconfigs/config"
           volumeMounts:
-            - mountPath: /home/headlamp/.config/Headlamp/kubeconfigs/
-              name: kubeconfig-volume
+            - mountPath: /build/plugins
+              name: headlamp-plugins
+            - mountPath: "/home/headlamp/.config/Headlamp/kubeconfigs"
+              name: kubeconfig
       nodeSelector:
         "kubernetes.io/os": linux
       volumes:
-        - name: kubeconfig-volume
-          hostPath:
-            path: /home/runner/.kube/config
-            type: File
+        - name: headlamp-plugins
+          persistentVolumeClaim:
+            claimName: headlamp
+        - name: kubeconfig
+          configMap:
+            name: headlamp-kubeconfig
+            items:
+              - key: config
+                path: config
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: headlamp-admin
+  namespace: kube-system
+  annotations:
+    kubernetes.io/service-account.name: "headlamp-admin"
+type: kubernetes.io/service-account-token
