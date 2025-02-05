@@ -34,14 +34,16 @@ jobs:
       - uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # v3.8.2
         with:
           node-version: 20.x
-      - name: Start cluster 2
-        uses: helm/kind-action@0025e74a8c7512023d06dc019c617aa3cf561fde # v1.0.0
-        with:
-          cluster_name: test2
       - name: Start cluster 1
         uses: helm/kind-action@0025e74a8c7512023d06dc019c617aa3cf561fde # v1.0.0
         with:
           cluster_name: test
+      - name: Start cluster 2
+        uses: helm/kind-action@0025e74a8c7512023d06dc019c617aa3cf561fde # v1.0.0
+        with:
+          cluster_name: test2
+      - name: Use cluster 1 context
+        run: kubectl config use-context test
         # now you can run kubectl to see the pods in the cluster
       - name: Try the cluster!
         run: kubectl get pods -A
@@ -131,6 +133,7 @@ jobs:
           kubectl --context=kind-test create serviceaccount headlamp-admin --namespace kube-system
           kubectl --context=kind-test create clusterrolebinding headlamp-admin --serviceaccount=kube-system:headlamp-admin --clusterrole=cluster-admin
           export TEST_TOKEN=$(kubectl --context=kind-test create token headlamp-admin --duration 24h -n kube-system)
+          echo "$TEST_TOKEN" > /tmp/headlamp_token
 
           kubectl --context=kind-test2 create serviceaccount headlamp-admin --namespace kube-system
           kubectl --context=kind-test2 create clusterrolebinding headlamp-admin --serviceaccount=kube-system:headlamp-admin --clusterrole=cluster-admin
@@ -153,7 +156,7 @@ jobs:
           echo $SERVICE_URL
           curl -L $SERVICE_URL | grep -q "Headlamp: Kubernetes Web UI"        
           echo "--------------------------------Getting HEADLAMP_TOKEN--------------------------------"
-          export HEADLAMP_TOKEN=$TEST_TOKEN
+          export HEADLAMP_TOKEN=$(cat /tmp/headlamp_token)
           echo "---------------------------------Certificate handling---------------------------------"
           export KUBECONFIG=$HOME/.kube/config
           ca_data=$(yq e '.clusters[0].cluster."certificate-authority-data"' $KUBECONFIG | base64 --decode)
