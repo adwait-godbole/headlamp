@@ -153,9 +153,7 @@ jobs:
           echo $SERVICE_URL
           curl -L $SERVICE_URL | grep -q "Headlamp: Kubernetes Web UI"        
           echo "--------------------------------Getting HEADLAMP_TOKEN--------------------------------"
-          kubectl create serviceaccount headlamp-admin --namespace kube-system
-          kubectl create clusterrolebinding headlamp-admin --serviceaccount=kube-system:headlamp-admin --clusterrole=cluster-admin
-          export HEADLAMP_TOKEN=$(kubectl create token headlamp-admin --duration 24h -n kube-system)
+          export HEADLAMP_TOKEN=$TEST_TOKEN
           echo "---------------------------------Certificate handling---------------------------------"
           export KUBECONFIG=$HOME/.kube/config
           ca_data=$(yq e '.clusters[0].cluster."certificate-authority-data"' $KUBECONFIG | base64 --decode)
