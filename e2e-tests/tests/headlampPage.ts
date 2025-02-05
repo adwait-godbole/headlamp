@@ -4,9 +4,11 @@ import { expect, Page } from "@playwright/test";
 export class HeadlampPage {
   constructor(private page: Page) {}
 
-  async authenticate(url = process.env.HEADLAMP_TEST_URL) {
+  async authenticate(cluster = "cluster1") {
     // Go to the authentication page
-    await this.page.goto(url || "/");
+    const testURL = process.env.HEADLAMP_TEST_URL;
+    const url = testURL ? `${testURL}/c/${cluster}` : "/";
+    await this.page.goto(url);
     await this.page.waitForSelector('h1:has-text("Authentication")');
 
     // Check to see if already authenticated

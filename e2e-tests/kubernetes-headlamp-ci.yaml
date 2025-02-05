@@ -36,25 +36,29 @@ data:
   config: |
     apiVersion: v1
     kind: Config
-    current-context: kind-cluster1
+    current-context: cluster1
     contexts:
-    - name: kind-cluster1
+    - name: cluster1
       context:
-        cluster: kind-cluster1
+        cluster: cluster1
         user: headlamp-admin
-    - name: kind-cluster2
+    - name: cluster2
       context:
-        cluster: kind-cluster2
+        cluster: cluster2
         user: headlamp-admin
     clusters:
-    - name: kind-cluster1
+    - name: cluster1
       cluster:
         server: ${CLUSTER1_SERVER}
         certificate-authority-data: ${CLUSTER1_CA_DATA}
-    - name: kind-cluster2
+    - name: cluster2
       cluster:
         server: ${CLUSTER2_SERVER}
         certificate-authority-data: ${CLUSTER2_CA_DATA}
+    users:
+    - name: headlamp-admin
+      user:
+        token: ${HEADLAMP_TOKEN}
 ---
 # Source: headlamp/templates/deployment.yaml
 apiVersion: apps/v1
