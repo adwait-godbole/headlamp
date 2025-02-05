@@ -48,6 +48,7 @@ jobs:
           kubectl config view --merge --flatten > merged-kubeconfig
           mkdir -p /home/runner/.kube
           cp merged-kubeconfig /home/runner/.kube/config
+          cat /home/runner/.kube/config
         # now you can run kubectl to see the pods in the cluster
       - name: Try the cluster!
         run: kubectl get pods -A
