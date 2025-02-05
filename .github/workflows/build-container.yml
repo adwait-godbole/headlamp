@@ -137,7 +137,7 @@ jobs:
           export TEST2_TOKEN=$(kubectl --context=kind-test2 create token headlamp-admin --duration 24h -n kube-system)
 
           # Create the multi-cluster config
-          envsubst < kubernetes-headlamp-ci.yaml | kubectl apply -f -
+          envsubst < e2e-tests/kubernetes-headlamp-ci.yaml | kubectl --context=kind-test apply -f -
       - name: Run e2e tests
         run: |
           echo "------------------------------------sleeping 12...------------------------------------"
