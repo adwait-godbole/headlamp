@@ -36,25 +36,25 @@ data:
   config: |
     apiVersion: v1
     kind: Config
-    current-context: kind-test
+    current-context: kind-cluster1
     contexts:
-    - name: kind-test
+    - name: kind-cluster1
       context:
-        cluster: kind-test
+        cluster: kind-cluster1
         user: headlamp-admin
-    - name: kind-test2
+    - name: kind-cluster2
       context:
-        cluster: kind-test2
+        cluster: kind-cluster2
         user: headlamp-admin
     clusters:
-    - name: kind-test
+    - name: kind-cluster1
       cluster:
-        server: ${TEST_SERVER}
-        certificate-authority-data: ${TEST_CA_DATA}
-    - name: kind-test2
+        server: ${CLUSTER1_SERVER}
+        certificate-authority-data: ${CLUSTER1_CA_DATA}
+    - name: kind-cluster2
       cluster:
-        server: ${TEST2_SERVER}
-        certificate-authority-data: ${TEST2_CA_DATA}
+        server: ${CLUSTER2_SERVER}
+        certificate-authority-data: ${CLUSTER2_CA_DATA}
 ---
 # Source: headlamp/templates/deployment.yaml
 apiVersion: apps/v1

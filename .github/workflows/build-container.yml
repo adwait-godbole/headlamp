@@ -34,16 +34,16 @@ jobs:
       - uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # v3.8.2
         with:
           node-version: 20.x
-      - name: Start cluster 1
+      - name: Start cluster1
         uses: helm/kind-action@0025e74a8c7512023d06dc019c617aa3cf561fde # v1.0.0
         with:
-          cluster_name: test
-      - name: Start cluster 2
+          cluster_name: cluster1
+      - name: Start cluster2
         uses: helm/kind-action@0025e74a8c7512023d06dc019c617aa3cf561fde # v1.0.0
         with:
-          cluster_name: test2
-      - name: Use cluster 1 context
-        run: kubectl config use-context kind-test
+          cluster_name: cluster2
+      - name: Use cluster1 context
+        run: kubectl config use-context kind-cluster1
         # now you can run kubectl to see the pods in the cluster
       - name: Try the cluster!
         run: kubectl get pods -A
@@ -60,19 +60,19 @@ jobs:
           export SHELL=/bin/bash
           docker load -i ~/image-cache/headlamp-plugins-test.tar
           docker load -i ~/image-cache/headlamp.tar
-      - name: Make a .plugins folder for testing later
-        if: steps.cache-image-restore.outputs.cache-hit != 'true'
-        run: |
-          echo "Extract pod-counter plugin into .plugins folder, which will be copied into image later by 'make image'."
-          cd plugins/examples/pod-counter
-          npm ci
-          npm run build
-          cd ../../../
-          cd plugins/headlamp-plugin
-          npm ci
-          node bin/headlamp-plugin.js extract ../examples/pod-counter ../../.plugins/
-          cd ../../
-          ls -laR .plugins
+      # - name: Make a .plugins folder for testing later
+      #   if: steps.cache-image-restore.outputs.cache-hit != 'true'
+      #   run: |
+      #     echo "Extract pod-counter plugin into .plugins folder, which will be copied into image later by 'make image'."
+      #     cd plugins/examples/pod-counter
+      #     npm ci
+      #     npm run build
+      #     cd ../../../
+      #     cd plugins/headlamp-plugin
+      #     npm ci
+      #     node bin/headlamp-plugin.js extract ../examples/pod-counter ../../.plugins/
+      #     cd ../../
+      #     ls -laR .plugins
       - name: Remove unnecessary files
         if: steps.cache-image-restore.outputs.cache-hit != 'true'
         run: |
@@ -121,35 +121,31 @@ jobs:
       #     fi
       - name: Configure multi-cluster access
         run: |
-          # Use test cluster context
-          kubectl config use-context kind-test
+          # Use cluster1 context
+          kubectl config use-context kind-cluster1
 
-          # Get cluster information for test cluster
-          export TEST_CA_DATA=$(kubectl config view --raw --minify -o jsonpath='{.clusters[0].cluster.certificate-authority-data}')
-          export TEST_SERVER="https://$(kubectl get nodes -o=jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'):6443"
-
-          # Create service account for test cluster
-          kubectl create serviceaccount headlamp-admin --namespace kube-system
-          kubectl create clusterrolebinding headlamp-admin --serviceaccount=kube-system:headlamp-admin --clusterrole=cluster-admin
-
-          # Use test2 cluster context
-          kubectl config use-context kind-test2
-
-          # Get cluster information for test2 cluster
-          export TEST2_CA_DATA=$(kubectl config view --raw --minify -o jsonpath='{.clusters[0].cluster.certificate-authority-data}')
-          export TEST2_SERVER="https://$(kubectl get nodes -o=jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'):6443"
+          export CLUSTER1_CA_DATA=$(kubectl config view --raw --minify -o jsonpath='{.clusters[0].cluster.certificate-authority-data}')
+          export CLUSTER1_SERVER="https://$(kubectl get nodes -o=jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'):6443"
 
           kubectl create serviceaccount headlamp-admin --namespace kube-system
           kubectl create clusterrolebinding headlamp-admin --serviceaccount=kube-system:headlamp-admin --clusterrole=cluster-admin
-          # export TEST2_TOKEN=$(kubectl --context=kind-test2 create token headlamp-admin --duration 24h -n kube-system)
+
+          # Use cluster2 context
+          kubectl config use-context kind-cluster2
+
+          export CLUSTER2_CA_DATA=$(kubectl config view --raw --minify -o jsonpath='{.clusters[0].cluster.certificate-authority-data}')
+          export CLUSTER2_SERVER="https://$(kubectl get nodes -o=jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'):6443"
+
+          # kubectl create serviceaccount headlamp-admin --namespace kube-system
+          # kubectl create clusterrolebinding headlamp-admin --serviceaccount=kube-system:headlamp-admin --clusterrole=cluster-admin
 
           # Create multi-cluster config
-          envsubst < e2e-tests/kubernetes-headlamp-ci.yaml | kubectl --context=kind-test apply -f -
+          envsubst < e2e-tests/kubernetes-headlamp-ci.yaml | kubectl --context=kind-cluster1 apply -f -
       - name: Run e2e tests
         run: |
           echo "------------------------------------sleeping 12...------------------------------------"
           sleep 12
-          kubectl config use-context kind-test
+          kubectl config use-context kind-cluster1
           kubectl get services --all-namespaces
           kubectl get deployments -n kube-system
           echo "------------------Waiting for headlamp deployment to be available...------------------"
@@ -163,20 +159,20 @@ jobs:
           echo "--------------------------------Getting HEADLAMP_TOKEN--------------------------------"
           export HEADLAMP_TOKEN=$(kubectl create token headlamp-admin --duration 24h -n kube-system)
           echo "---------------------------------Certificate handling---------------------------------"
-          # export KUBECONFIG=$HOME/.kube/config
-          # ca_data=$(yq e '.clusters[0].cluster."certificate-authority-data"' $KUBECONFIG | base64 --decode)
-          # echo "$ca_data" > ca.crt
-          # kubectl config set-cluster kind-test --certificate-authority=$(pwd)/ca.crt --server=https://${IP_ADDRESS}:${SERVICE_PORT}
-          # kubectl config unset clusters.kind-test.certificate-authority-data
-          # cc_data=$(yq e '.users[0].user."client-certificate-data"' $KUBECONFIG | base64 --decode)
-          # echo "$cc_data" > client.crt
-          # ck_data=$(yq e '.users[0].user."client-key-data"' $KUBECONFIG | base64 --decode)
-          # echo "$ck_data" > client.key
-          # kubectl config set-credentials admin@kind-test --client-certificate=$(pwd)/client.crt --client-key=$(pwd)/client.key
-          # kubectl config unset users.admin@kind-test.client-certificate-data
-          # kubectl config unset users.admin@kind-test.client-key-data
-          # echo "Modified kubeconfig:"
-          # cat $KUBECONFIG
+          export KUBECONFIG=$HOME/.kube/config
+          ca_data=$(yq e '.clusters[0].cluster."certificate-authority-data"' $KUBECONFIG | base64 --decode)
+          echo "$ca_data" > ca.crt
+          kubectl config set-cluster kind-cluster1 --certificate-authority=$(pwd)/ca.crt --server=https://${IP_ADDRESS}:${SERVICE_PORT}
+          kubectl config unset clusters.kind-cluster1.certificate-authority-data
+          cc_data=$(yq e '.users[0].user."client-certificate-data"' $KUBECONFIG | base64 --decode)
+          echo "$cc_data" > client.crt
+          ck_data=$(yq e '.users[0].user."client-key-data"' $KUBECONFIG | base64 --decode)
+          echo "$ck_data" > client.key
+          kubectl config set-credentials admin@kind-cluster1 --client-certificate=$(pwd)/client.crt --client-key=$(pwd)/client.key
+          kubectl config unset users.admin@kind-cluster1.client-certificate-data
+          kubectl config unset users.admin@kind-cluster1.client-key-data
+          echo "Modified kubeconfig:"
+          cat $KUBECONFIG
           echo "-----------------------------Running playwright e2e tests-----------------------------"
           cd e2e-tests
           npm ci
