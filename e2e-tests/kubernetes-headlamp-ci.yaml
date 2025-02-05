@@ -1,33 +1,3 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: headlamp-kubeconfig
-  namespace: kube-system
-data:
-  config1: |
-    apiVersion: v1
-    kind: Config
-    clusters:
-    - name: test
-      cluster:
-        server: https://test-control-plane:6443
-    contexts:
-    - name: test
-      context:
-        cluster: test
-    current-context: test
-  config2: |
-    apiVersion: v1
-    kind: Config
-    clusters:
-    - name: test2
-      cluster:
-        server: https://test2-control-plane:6443
-    contexts:
-    - name: test2
-      context:
-        cluster: test2
-    current-context: test2
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -49,17 +19,6 @@ spec:
         app.kubernetes.io/name: headlamp
         app.kubernetes.io/instance: headlamp
     spec:
-      initContainers:
-        - command:
-            - /bin/sh
-            - -c
-            - mkdir -p /build/plugins && cp -r /plugins/* /build/plugins/
-          image: ghcr.io/headlamp-k8s/headlamp-plugins-test:latest
-          imagePullPolicy: Never
-          name: headlamp-plugins
-          volumeMounts:
-            - mountPath: /build/plugins
-              name: headlamp-plugins
       containers:
         - name: headlamp
           securityContext:
@@ -72,29 +31,21 @@ spec:
           args:
             - "-in-cluster"
             - "-enable-dynamic-clusters"
-            - "-plugins-dir=/build/plugins"
-          env:
-            - name: KUBECONFIG
-              value: "/home/headlamp/.config/Headlamp/kubeconfigs/config1:/home/headlamp/.config/Headlamp/kubeconfigs/config2"
+            - "-kubeconfig=/home/headlamp/.config/Headlamp/kubeconfigs/config"
           ports:
             - name: http
               containerPort: 4466
               protocol: TCP
+          env:
+            - name: KUBECONFIG
+              value: "/home/headlamp/.config/Headlamp/kubeconfigs/config"
           volumeMounts:
-            - mountPath: /build/plugins
-              name: headlamp-plugins
-            - mountPath: /home/headlamp/.config/Headlamp/kubeconfigs/config1
-              subPath: config1
-              name: kubeconfig
-            - mountPath: /home/headlamp/.config/Headlamp/kubeconfigs/config2
-              subPath: config2
-              name: kubeconfig
+            - mountPath: /home/headlamp/.config/Headlamp/kubeconfigs/
+              name: kubeconfig-volume
       nodeSelector:
         "kubernetes.io/os": linux
       volumes:
-        - name: headlamp-plugins
-          persistentVolumeClaim:
-            claimName: headlamp
-        - name: kubeconfig
-          configMap:
-            name: headlamp-kubeconfig
+        - name: kubeconfig-volume
+          hostPath:
+            path: /home/runner/.kube/config
+            type: File
