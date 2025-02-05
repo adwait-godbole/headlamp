@@ -55,13 +55,6 @@ data:
       cluster:
         server: ${TEST2_SERVER}
         certificate-authority-data: ${TEST2_CA_DATA}
-    users:
-    - name: headlamp-admin
-      user:
-        token: ${TEST_TOKEN}
-    - name: headlamp-admin
-      user:
-        token: ${TEST2_TOKEN}
 ---
 # Source: headlamp/templates/deployment.yaml
 apiVersion: apps/v1

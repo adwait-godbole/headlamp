@@ -25,7 +25,7 @@ test("headlamp is there and so is minikube", async ({ page }) => {
 test("main page should have Network tab", async ({ page }) => {
   const headlampPage = new HeadlampPage(page);
 
-  await headlampPage.authenticate("/c/main");
+  await headlampPage.authenticate("/c/test");
   await headlampPage.hasNetworkTab();
 });
 
@@ -33,7 +33,7 @@ test("service page should have headlamp service", async ({ page }) => {
   const headlampPage = new HeadlampPage(page);
   const servicesPage = new ServicesPage(page);
 
-  await headlampPage.authenticate("/c/test");
+  await headlampPage.authenticate("/c/main");
   await servicesPage.navigateToServices();
   await servicesPage.clickOnServicesSection();
 
@@ -57,7 +57,7 @@ test("headlamp service page should contain port", async ({ page }) => {
 test("main page should have Security tab", async ({ page }) => {
   const headlampPage = new HeadlampPage(page);
 
-  await headlampPage.authenticate("/c/main");
+  await headlampPage.authenticate("/c/test");
   await headlampPage.hasSecurityTab();
 });
 
