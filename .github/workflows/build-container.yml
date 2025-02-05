@@ -156,7 +156,7 @@ jobs:
           cd e2e-tests
           npm ci
           npx playwright install --with-deps
-          HEADLAMP_TEST_URL=$SERVICE_URL npx playwright test -g "main page should have Security" -g "main page should have Network" -g "service page should have headlamp service"
+          HEADLAMP_TEST_URL=$SERVICE_URL npx playwright test -g "main page should have Security|main page should have Network|service page should have headlamp service"
           exit_code=$?
           if [ $exit_code -ne 0 ]; then
             echo "Playwright tests failed with exit code $exit_code"
