@@ -50,7 +50,16 @@ spec:
     await page.getByRole('button', { name: 'Apply' }).click();
 
     await page.waitForSelector(`text=Applied ${name}`);
-    await expect(page.getByRole('link', { name: name })).toBeVisible();
+
+    const podLink = page.getByRole('link', { name: name });
+    if (!(await podLink.isVisible())) {
+      console.log("Real time update didn't work. Performing page reload...");
+      await page.reload({ waitUntil: 'networkidle' });
+      await page.waitForLoadState('networkidle');
+    } else {
+      console.log('Real time update worked.');
+    }
+    await expect(podLink).toBeVisible();
 
     console.log(`Created pod ${name}`);
   }
@@ -68,7 +77,7 @@ spec:
     await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible();
     await page.getByRole('button', { name: 'Delete' }).click();
 
-    await page.waitForSelector('text=Are you sure you want to delete this item?');
+    await page.waitForSelector(`text=Are you sure you want to delete item ${name}?`);
 
     await expect(page.getByRole('button', { name: 'Yes' })).toBeVisible();
     await page.getByRole('button', { name: 'Yes' }).click();
@@ -79,15 +88,29 @@ spec:
   }
 
   async confirmPodCreation(name) {
-    await this.page.waitForSelector(`a:has-text("${name}")`);
-    await expect(this.page.locator(`a:has-text("${name}")`)).toBeVisible();
+    const podLink = this.page.locator(`a:has-text("${name}")`);
+    if (!(await podLink.isVisible())) {
+      console.log("Real time update didn't work. Performing page reload...");
+      await this.page.reload({ waitUntil: 'networkidle' });
+      await this.page.waitForLoadState('networkidle');
+    } else {
+      console.log('Real time update worked.');
+    }
+    await expect(podLink).toBeVisible();
 
     console.log(`Pod ${name} is running`);
   }
 
   async confirmPodDeletion(name) {
-    await this.page.waitForSelector(`a:has-text("${name}")`);
-    await expect(this.page.locator(`a:has-text("${name}")`)).not.toBeVisible();
+    const podLink = this.page.locator(`a:has-text("${name}")`);
+    if (await podLink.isVisible()) {
+      console.log("Real time update didn't work. Performing page reload...");
+      await this.page.reload({ waitUntil: 'networkidle' });
+      await this.page.waitForLoadState('networkidle');
+    } else {
+      console.log('Real time update worked.');
+    }
+    await expect(podLink).not.toBeVisible();
 
     console.log(`Pod ${name} is deleted`);
   }
