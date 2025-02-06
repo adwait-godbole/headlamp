@@ -166,15 +166,15 @@ jobs:
           export KUBECONFIG=$HOME/.kube/config
           ca_data=$(yq e '.clusters[0].cluster."certificate-authority-data"' $KUBECONFIG | base64 --decode)
           echo "$ca_data" > ca.crt
-          kubectl config set-cluster test --certificate-authority=$(pwd)/ca.crt --server=https://${IP_ADDRESS}:${SERVICE_PORT}
-          kubectl config unset clusters.test.certificate-authority-data
+          kubectl config set-cluster kind-test --certificate-authority=$(pwd)/ca.crt --server=https://${IP_ADDRESS}:${SERVICE_PORT}
+          kubectl config unset clusters.kind-test.certificate-authority-data
           cc_data=$(yq e '.users[0].user."client-certificate-data"' $KUBECONFIG | base64 --decode)
           echo "$cc_data" > client.crt
           ck_data=$(yq e '.users[0].user."client-key-data"' $KUBECONFIG | base64 --decode)
           echo "$ck_data" > client.key
-          kubectl config set-credentials admin@test --client-certificate=$(pwd)/client.crt --client-key=$(pwd)/client.key
-          kubectl config unset users.admin@test.client-certificate-data
-          kubectl config unset users.admin@test.client-key-data
+          kubectl config set-credentials admin@kind-test --client-certificate=$(pwd)/client.crt --client-key=$(pwd)/client.key
+          kubectl config unset users.admin@kind-test.client-certificate-data
+          kubectl config unset users.admin@kind-test.client-key-data
           echo "Modified kubeconfig:"
           cat $KUBECONFIG
           echo "-----------------------------Running playwright e2e tests-----------------------------"

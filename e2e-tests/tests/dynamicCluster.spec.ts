@@ -5,14 +5,14 @@ const fs = require("fs").promises;
 const util = require("util");
 const exec = util.promisify(require("child_process").exec);
 
-test("There is cluster choose button and main cluster is selected", async ({
+test("There is cluster choose button and test cluster is selected", async ({
   page,
 }) => {
   const headlampPage = new HeadlampPage(page);
   await headlampPage.authenticate();
   await headlampPage.pageLocatorContent(
-    'button:has-text("Our Cluster Chooser button. Cluster: main")',
-    "Our Cluster Chooser button. Cluster: main"
+    'button:has-text("Cluster: test")',
+    "Cluster: test"
   );
 });
 
