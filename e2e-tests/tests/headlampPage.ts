@@ -10,8 +10,10 @@ export class HeadlampPage {
 
   async authenticate(cluster = "test", token = process.env.HEADLAMP_TOKEN) {
     // Go to the authentication page
-    await this.page.goto(`${this.testURL}/c/${cluster}`);
-    await this.page.waitForLoadState("load");
+    await this.page.goto(`${this.testURL}/c/${cluster}`, {
+      waitUntil: "networkidle",
+    });
+    await this.page.waitForLoadState("networkidle");
 
     await this.page.waitForSelector('h1:has-text("Authentication")');
 

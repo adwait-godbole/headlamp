@@ -8,9 +8,12 @@ test.describe("multi-cluster setup", () => {
     headlampPage = new HeadlampPage(page);
     await headlampPage.navigateTopage("/", /Choose a cluster/);
     await expect(page.locator('h1:has-text("Home")')).toBeVisible();
+    await expect(page.locator('h2:has-text("All Clusters")')).toBeVisible();
   });
 
-  test("home page should have 2 cluster choice buttons", async ({ page }) => {
+  test("home page should display two cluster selection buttons labeled 'test' and 'test2'", async ({
+    page,
+  }) => {
     const buttons = page.locator("button p");
     await expect(buttons).toHaveCount(2);
     await expect(page.locator("button p", { hasText: /^test$/ })).toBeVisible();
@@ -19,21 +22,29 @@ test.describe("multi-cluster setup", () => {
     ).toBeVisible();
   });
 
-  test("home page should have a table with correct cluster entries", async ({
+  test("home page should display a table containing exactly two rows, each representing a cluster entry", async ({
     page,
   }) => {
-    await expect(page.locator('h2:has-text("All Clusters")')).toBeVisible();
-
     const tableRows = page.locator("table tbody tr");
     await expect(tableRows).toHaveCount(2);
+  });
+
+  test("table should contain 'Name' and 'Status' column headers", async ({
+    page,
+  }) => {
     await expect(page.locator("th", { hasText: "Name" })).toBeVisible();
     await expect(page.locator("th", { hasText: "Status" })).toBeVisible();
+  });
 
+  test("table should list 'test' cluster and 'test2' cluster with an 'Active' status and valid links", async ({
+    page,
+  }) => {
     for (const clusterName of ["test", "test2"]) {
       const clusterAnchor = page.locator("table tbody tr td a", {
         hasText: new RegExp(`^${clusterName}$`),
       });
       await expect(clusterAnchor).toBeVisible();
+      await expect(clusterAnchor).toHaveAttribute("href", `/c/${clusterName}/`);
 
       const clusterRow = clusterAnchor.locator("../../..");
 
@@ -42,7 +53,9 @@ test.describe("multi-cluster setup", () => {
     }
   });
 
-  test("login to 'test' cluster and logout", async ({ page }) => {
+  test("user should be able to log in to 'test' cluster, perform logout and return to cluster selection", async ({
+    page,
+  }) => {
     const testClusterAnchor = page.locator("table tbody tr td a", {
       hasText: /^test$/,
     });
@@ -50,13 +63,19 @@ test.describe("multi-cluster setup", () => {
     await expect(testClusterAnchor).toHaveAttribute("href", "/c/test/");
 
     await headlampPage.authenticate();
+    await headlampPage.pageLocatorContent(
+      'button:has-text("Cluster: ")',
+      "test"
+    );
     await headlampPage.logout();
 
     await page.waitForLoadState("load");
     await headlampPage.hasTitleContaining(/Choose a cluster/);
   });
 
-  test("login to 'test2' cluster and logout", async ({ page }) => {
+  test("user should be able to log in to 'test2' cluster, perform logout and return to cluster selection", async ({
+    page,
+  }) => {
     const test2ClusterAnchor = page.locator("table tbody tr td a", {
       hasText: /^test2$/,
     });
@@ -66,6 +85,10 @@ test.describe("multi-cluster setup", () => {
     await headlampPage.authenticate(
       "test2",
       process.env.HEADLAMP_TEST2_TOKEN || ""
+    );
+    await headlampPage.pageLocatorContent(
+      'button:has-text("Cluster: ")',
+      "test2"
     );
     await headlampPage.logout();
 

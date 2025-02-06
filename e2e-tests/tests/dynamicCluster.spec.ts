@@ -10,10 +10,7 @@ test("There is cluster choose button and test cluster is selected", async ({
 }) => {
   const headlampPage = new HeadlampPage(page);
   await headlampPage.authenticate();
-  await headlampPage.pageLocatorContent(
-    'button:has-text("Cluster: test")',
-    "Cluster: test"
-  );
+  await headlampPage.pageLocatorContent('button:has-text("Cluster: ")', "test");
 });
 
 test("Store modified kubeconfig to IndexDB and check if present", async ({
