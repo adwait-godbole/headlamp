@@ -159,28 +159,29 @@ jobs:
           export SERVICE_URL="http://${IP_ADDRESS}:${SERVICE_PORT}"
           echo $SERVICE_URL
           curl -L $SERVICE_URL | grep -q "Headlamp: Kubernetes Web UI"        
-          echo "--------------------------------Getting HEADLAMP_TOKEN--------------------------------"
+          echo "--------------------------------Export Tokens Received From Previous Step--------------------------------"
           export HEADLAMP_TOKEN=${HEADLAMP_TOKEN}
+          export HEADLAMP_TEST2_TOKEN=${HEADLAMP_TEST2_TOKEN}
           echo "---------------------------------Certificate handling---------------------------------"
           export KUBECONFIG=$HOME/.kube/config
           ca_data=$(yq e '.clusters[0].cluster."certificate-authority-data"' $KUBECONFIG | base64 --decode)
           echo "$ca_data" > ca.crt
-          kubectl config set-cluster cluster1 --certificate-authority=$(pwd)/ca.crt --server=https://${IP_ADDRESS}:${SERVICE_PORT}
-          kubectl config unset clusters.cluster1.certificate-authority-data
+          kubectl config set-cluster test --certificate-authority=$(pwd)/ca.crt --server=https://${IP_ADDRESS}:${SERVICE_PORT}
+          kubectl config unset clusters.test.certificate-authority-data
           cc_data=$(yq e '.users[0].user."client-certificate-data"' $KUBECONFIG | base64 --decode)
           echo "$cc_data" > client.crt
           ck_data=$(yq e '.users[0].user."client-key-data"' $KUBECONFIG | base64 --decode)
           echo "$ck_data" > client.key
-          kubectl config set-credentials admin@cluster1 --client-certificate=$(pwd)/client.crt --client-key=$(pwd)/client.key
-          kubectl config unset users.admin@cluster1.client-certificate-data
-          kubectl config unset users.admin@cluster1.client-key-data
+          kubectl config set-credentials admin@test --client-certificate=$(pwd)/client.crt --client-key=$(pwd)/client.key
+          kubectl config unset users.admin@test.client-certificate-data
+          kubectl config unset users.admin@test.client-key-data
           echo "Modified kubeconfig:"
           cat $KUBECONFIG
           echo "-----------------------------Running playwright e2e tests-----------------------------"
           cd e2e-tests
           npm ci
           npx playwright install --with-deps
-          HEADLAMP_TEST_URL=$SERVICE_URL npx playwright test 
+          HEADLAMP_TEST_URL=$SERVICE_URL npx playwright test
           exit_code=$?
           if [ $exit_code -ne 0 ]; then
             echo "Playwright tests failed with exit code $exit_code"

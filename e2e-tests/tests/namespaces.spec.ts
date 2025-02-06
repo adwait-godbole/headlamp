@@ -13,7 +13,7 @@ test("create a namespace with the minimal editor then delete it", async ({
   const content = await page.content();
   if (
     !content.includes("Namespaces") ||
-    !content.includes('href="/c/main/namespaces')
+    !content.includes('href="/c/test/namespaces')
   ) {
     return;
   }

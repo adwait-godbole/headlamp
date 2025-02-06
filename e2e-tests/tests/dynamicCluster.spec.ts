@@ -34,7 +34,7 @@ test("Store modified kubeconfig to IndexDB and check if present", async ({
   expect(storedKubeconfig).not.toBeNull();
 });
 
-test("check test is present in cluster and working", async ({ page }) => {
+test("check main is present in cluster and working", async ({ page }) => {
   const headlampPage = new HeadlampPage(page);
 
   await headlampPage.authenticate();
@@ -49,7 +49,7 @@ test("check test is present in cluster and working", async ({ page }) => {
 
   expect(storedKubeconfig).not.toBeNull();
 
-  await headlampPage.navigateTopage("/c/test", /Cluster/);
+  await headlampPage.navigateTopage("/c/main", /Cluster/);
   await headlampPage.pageLocatorContent('h2:has-text("Overview")', "Overview");
 });
 
@@ -63,16 +63,16 @@ const getBase64EncodedKubeconfig = async () => {
 
   // Parse the kubeconfig JSON
   const kubeconfig = JSON.parse(stdout);
-  // Update the existing cluster and context names to "test"
-  kubeconfig.clusters[0].name = "test";
+  // Update the existing cluster and context names to "main"
+  kubeconfig.clusters[0].name = "main";
   // The 10.96.0.0/12: is the CIDR used by service cluster IP’s
   // and the first service that is created is that of minikube when it bootstraps the cluster.
   // It will always get 10.96.0.1 IP assigned. For more context please check https://minikube.sigs.k8s.io/docs/handbook/vpn_and_proxy/.
   kubeconfig.clusters[0].cluster.server = "https://10.96.0.1:443";
-  kubeconfig.contexts[0].name = "test";
-  kubeconfig.users[0].name = "test";
-  kubeconfig.contexts[0].context.user = "test";
-  kubeconfig.contexts[0].context.cluster = "test";
+  kubeconfig.contexts[0].name = "main";
+  kubeconfig.users[0].name = "main";
+  kubeconfig.contexts[0].context.user = "main";
+  kubeconfig.contexts[0].context.cluster = "main";
 
   // Get the contents of certificate-authority file and convert to base64
   const caFilePath = kubeconfig.clusters[0].cluster["certificate-authority"];
@@ -98,8 +98,8 @@ const getBase64EncodedKubeconfig = async () => {
   delete kubeconfig.users[0].user["client-certificate"];
   delete kubeconfig.clusters[0].cluster["certificate-authority"];
 
-  // Set the current context to "minikubetest"
-  kubeconfig["current-context"] = "test";
+  // Set the current context to "minikubemain"
+  kubeconfig["current-context"] = "main";
 
   // Convert JSON back to YAML
   const kubeconfigYaml = yaml.stringify(kubeconfig);
