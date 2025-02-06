@@ -4,7 +4,7 @@ import { expect, Page } from "@playwright/test";
 export class HeadlampPage {
   constructor(private page: Page) {}
 
-  async authenticate(cluster = "cluster1") {
+  async authenticate(cluster = "test") {
     // Go to the authentication page
     const testURL = process.env.HEADLAMP_TEST_URL;
     const url = testURL ? `${testURL}/c/${cluster}` : "/";
