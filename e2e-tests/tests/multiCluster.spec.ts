@@ -3,6 +3,8 @@ import { HeadlampPage } from "./headlampPage";
 
 test.describe("multi-cluster setup", () => {
   let headlampPage: HeadlampPage;
+  const testToken = process.env.HEADLAMP_TOKEN || "";
+  const test2Token = process.env.HEADLAMP_TEST2_TOKEN || "";
 
   test.beforeEach(async ({ page }) => {
     headlampPage = new HeadlampPage(page);
@@ -53,7 +55,7 @@ test.describe("multi-cluster setup", () => {
     }
   });
 
-  test("user should be able to log in to 'test' cluster, perform logout and return to cluster selection", async ({
+  test("user should be able to login to 'test' cluster, perform logout and return to cluster selection", async ({
     page,
   }) => {
     const testClusterAnchor = page.locator("table tbody tr td a", {
@@ -62,7 +64,9 @@ test.describe("multi-cluster setup", () => {
     await expect(testClusterAnchor).toBeVisible();
     await expect(testClusterAnchor).toHaveAttribute("href", "/c/test/");
 
-    await headlampPage.authenticate();
+    await Promise.all([page.waitForNavigation(), testClusterAnchor.click()]);
+
+    await headlampPage.authenticate("test", testToken, true);
     await headlampPage.pageLocatorContent(
       'button:has-text("Cluster: ")',
       "test"
@@ -73,7 +77,7 @@ test.describe("multi-cluster setup", () => {
     await headlampPage.hasTitleContaining(/Choose a cluster/);
   });
 
-  test("user should be able to log in to 'test2' cluster, perform logout and return to cluster selection", async ({
+  test("user should be able to login to 'test2' cluster, perform logout and return to cluster selection", async ({
     page,
   }) => {
     const test2ClusterAnchor = page.locator("table tbody tr td a", {
@@ -82,10 +86,9 @@ test.describe("multi-cluster setup", () => {
     await expect(test2ClusterAnchor).toBeVisible();
     await expect(test2ClusterAnchor).toHaveAttribute("href", "/c/test2/");
 
-    await headlampPage.authenticate(
-      "test2",
-      process.env.HEADLAMP_TEST2_TOKEN || ""
-    );
+    await Promise.all([page.waitForNavigation(), test2ClusterAnchor.click()]);
+
+    await headlampPage.authenticate("test2", test2Token, true);
     await headlampPage.pageLocatorContent(
       'button:has-text("Cluster: ")',
       "test2"

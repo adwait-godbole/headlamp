@@ -8,12 +8,18 @@ export class HeadlampPage {
     this.testURL = process.env.HEADLAMP_TEST_URL || "/";
   }
 
-  async authenticate(cluster = "test", token = process.env.HEADLAMP_TOKEN) {
-    // Go to the authentication page
-    await this.page.goto(`${this.testURL}/c/${cluster}`, {
-      waitUntil: "networkidle",
-    });
-    await this.page.waitForLoadState("networkidle");
+  async authenticate(
+    cluster = "test",
+    token = process.env.HEADLAMP_TOKEN,
+    skipNavigation = false
+  ) {
+    if (!skipNavigation) {
+      // Go to the authentication page
+      await this.page.goto(`${this.testURL}/c/${cluster}`, {
+        waitUntil: "networkidle",
+      });
+      await this.page.waitForLoadState("networkidle");
+    }
 
     await this.page.waitForSelector('h1:has-text("Authentication")');
 
